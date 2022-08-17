@@ -1,4 +1,23 @@
-function createTodoElement(todo) {
+function isMathStatus(liElement, filterStatus) {
+  return filterStatus === 'All' || liElement.dataset.status === filterStatus;
+}
+
+function isMatchSearch(liElement, searchTerm) {
+  if (!liElement) return false;
+  if (searchTerm === '') return true;
+  const titleElement = liElement.querySelector('p.todo__title');
+  if (!titleElement) return false;
+  return titleElement.textContent.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+function isMatch(liElement, params) {
+  return (
+    isMatchSearch(liElement, params.get('searchTerm')) &&
+    isMathStatus(liElement, params.get('status'))
+  );
+}
+
+function createTodoElement(todo, params) {
   if (!todo) return null;
 
   const todoTemplate = document.getElementById('todoTemplate');
@@ -24,6 +43,8 @@ function createTodoElement(todo) {
 
   const titleElement = todoElement.querySelector('.todo__title');
   if (titleElement) titleElement.textContent = todo.title;
+
+  todoElement.hidden = !isMatch(todoElement, params);
 
   const markAsDoneButton = todoElement.querySelector('button.mark-as-done');
   if (markAsDoneButton) {
@@ -75,6 +96,7 @@ function createTodoElement(todo) {
 
   return todoElement;
 }
+
 function populateTodoForm(todo) {
   const todoForm = document.getElementById('todoFormId');
   if (!todoForm) return;
@@ -85,12 +107,12 @@ function populateTodoForm(todo) {
   if (todoCheckStt) todoCheckStt.checked = todo.status === 'complete' ? true : false;
 }
 
-function renderTodoList(todoList, ulElementID) {
+function renderTodoList(todoList, ulElementID, params) {
   if (!Array.isArray(todoList) || todoList.length === 0) return;
   const ulElement = document.getElementById(ulElementID);
   if (!ulElement) return;
   for (const todo of todoList) {
-    const liElement = createTodoElement(todo);
+    const liElement = createTodoElement(todo, params);
     ulElement.appendChild(liElement);
   }
 }
@@ -160,8 +182,11 @@ function handleTodoFormSubmit(event) {
   //   { id: 2, title: 'html', status: 'complete' },
   //   { id: 3, title: 'css', status: 'pending' },
   // ];
+
+  const params = new URLSearchParams(window.location.search);
+
   const todoList = getTodoList();
-  renderTodoList(todoList, 'todoList');
+  renderTodoList(todoList, 'todoList', params);
 
   const todoForm = document.getElementById('todoFormId');
   if (todoForm) {
